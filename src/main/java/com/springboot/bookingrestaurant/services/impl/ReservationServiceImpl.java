@@ -36,7 +36,7 @@ public class ReservationServiceImpl implements IReservationService {
     public static final ModelMapper modelMapper = new ModelMapper();
 
     @Override
-    public ReservationRest getReservation(Long reservationId) throws BookingException {
+    public ReservationRest getReservationById(Long reservationId) throws BookingException {
         return modelMapper.map(getReservationEntity(reservationId), ReservationRest.class);
     }
 
@@ -47,6 +47,10 @@ public class ReservationServiceImpl implements IReservationService {
 
         final Turn turnId = turnRepository.findById(createReservationRest.getTurnId())
                 .orElseThrow(() -> new NotFoundException("TURN_NOT_FOUND", "TURN_NOT_FOUND"));
+
+        if (reservationRepository.findByTurnAndRestaurantId(turnId.getName(), restaurantId.getId()).isPresent()) {
+            throw new NotFoundException("RESERVATION_ALREADY_EXIST", "RESERVATION_ALREADY_EXIST");
+        }
 
         String locator = generateLocator(restaurantId, createReservationRest);
 
@@ -65,6 +69,21 @@ public class ReservationServiceImpl implements IReservationService {
         }
 
         return locator;
+    }
+
+    @Override
+    public String deleteReservation(String locator) throws BookingException {
+        reservationRepository.findByLocator(locator)
+                .orElseThrow(() -> new NotFoundException("LOCATOR_NOT_FOUND", "LOCATOR_NOT_FOUND"));
+
+        try {
+            reservationRepository.deleteByLocator(locator);
+        } catch (Exception e) {
+            LOGGER.error("INTERNAL_SERVER_ERROR", e);
+            throw new InternalServerErrorException("INTERNAL_SERVER_ERROR", "INTERNAL_SERVER_ERROR");
+        }
+
+        return "LOCATOR_DELETED";
     }
 
     private String generateLocator(Restaurant restaurantId, CreateReservationRest createReservationRest)

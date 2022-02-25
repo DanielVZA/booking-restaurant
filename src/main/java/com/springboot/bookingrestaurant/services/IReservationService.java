@@ -6,7 +6,9 @@ import com.springboot.bookingrestaurant.jsons.ReservationRest;
 
 public interface IReservationService {
 
-    ReservationRest getReservation(Long reservationId) throws BookingException;
+    ReservationRest getReservationById(Long reservationId) throws BookingException;
 
     String createReservation(CreateReservationRest createReservationRest) throws BookingException;
+
+    public String deleteReservation(String locator) throws BookingException;
 }
